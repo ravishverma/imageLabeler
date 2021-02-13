@@ -1,0 +1,71 @@
+<html>
+<head>
+<script>
+let objLocs = {'start':[],'end':[]};
+
+let updateTable = function(start,end) {
+    let table = document.getElementById("objects");
+    let c0 = [Math.round((start[0]+end[0])/2), Math.round((start[1]+end[1])/2)];
+    let d0 = [Math.round(Math.abs(start[0]-end[0])), Math.round(Math.abs(start[1]-end[1]))];
+    let row = table.insertRow();
+    row.innerHTML = "<td>"+c0+"</td>"+"<td>"+d0[0]+"</td>"+"<td>"+d0[1]+"</td>";
+}
+
+const activate = function () {
+    let canvas = document.getElementById("canvas")
+    let ctx = canvas.getContext("2d");
+
+    let img = new Image();
+
+    img.onload = function() {
+                   canvas.height = canvas.width * (img.height / img.width);
+                   ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    }
+
+    img.src = "test.jpg";
+
+    let getPos = function(e) {
+            let bbox = canvas.getBoundingClientRect();
+            let pos = [Math.round((e.clientX-bbox.left) * (img.width/canvas.width)),
+                       Math.round((e.clientY-bbox.top) * (img.height/canvas.height))];
+            return pos;
+    }
+
+    let loc = document.getElementById("location");
+
+    canvas.addEventListener('mousemove', function (e) {
+        let pos = getPos(e);
+        loc.innerHTML = "Current Position: (" + pos[0] + "," + pos[1] + ")";
+    })
+
+    canvas.addEventListener('mousedown', function (e) {
+        let pos = getPos(e);
+        objLocs.start.push(pos);
+    })
+
+    canvas.addEventListener('mouseup', function (e) {
+        let pos = getPos(e);
+        objLocs.end.push(pos);
+        let len = objLocs.start.length;
+        updateTable(objLocs.start[len-1],objLocs.end[len-1]);
+    })
+
+}
+
+</script>
+</head>
+<body onload="activate()">
+<center>
+<canvas id="canvas" width=500 height=300></canvas>
+<p id="location">Current Position: (0,0)</p>
+
+<table id="objects">
+<tr>
+<th>Center</th>
+<th>Width</th>
+<th>Height</th>
+</tr>
+</table>
+</center>
+</body>
+</html>
