@@ -5,6 +5,7 @@ function App () {
     return (
         <div>
             <Platform/>
+            <Buttons/>
         </div>
     )
 }
@@ -32,6 +33,14 @@ function Platform (props) {
     )
 }
 
-// <img src={props.source} height={400} width={600} />
+function Buttons () {
+    return (
+        <center>
+        <input type='file' classname='inline-divs' />
+        <button type='button' classname='inline-divs'>Clear all</button>
+        <button type='button' classname='inline-divs'>Download</button>
+        </center>
+    )
+}
 
 ReactDOM.render(<App />,document.getElementById('root'));
