@@ -2,63 +2,54 @@ import React, { useState, useEffect} from 'react';
 import ReactDOM from 'react-dom';
 
 function App () {
-    const [source, setSource] = useState('default.svg');
-
-    let handleClearAnnot = function () {
-        setSource('test.jpg');
-    }
-
-    let handleClearAll = function () {
-        setSource('default.svg');
-    }
-
     return (
         <div>
-            <Platform source={source}/>
-            <center>
-            <input type='file' className='inline-divs' />
-            <button type='button' className='inline-divs' onClick={handleClearAnnot}>
-            Clear annotations
-            </button>
-            <button type='button' className='inline-divs' onClick={handleClearAll}>
-            Clear all
-            </button>
-            <button type='button' className='inline-divs'>
-            Download
-            </button>
-            </center>
+            <Platform/>
         </div>
     )
 }
 
 function Capture (props) {
-    console.log(props);
     return (
         <tr>
-        <td>{props.index}</td>
         <td>({props.start[0]},{props.start[1]})</td>
         <td>({props.end[0]},{props.end[1]})</td>
+        <td><input type='text' /></td>
         </tr>
     )
 }
 
 function CaptureList (props) {
-    const boxes = [];
+    const [boxes, setBoxes] = useState([]);
 
-    if ((Object.keys(props.end).length>0) && (Object.keys(props.start).length==Object.keys(props.end).length)) {
-        for (let i in props.start) {
-            boxes.push(<Capture index={i}start={props.start[i]} end={props.end[i]} />);
+    useEffect(() => {
+        let n = Object.keys(props.end).length;
+        if (n>0) {
+            setBoxes(prev => {
+                return [...prev, <Capture key={n-1} start={props.start[n-1]} end={props.end[n-1]} />]
+            });
         }
-    }
+
+    }, [props.end])
+
+    useEffect(() => {
+        if (Object.keys(props.start).length==0) {
+            setBoxes([]);
+        }
+    }, [props.start])
 
     return (
         <table>
+        <thead>
         <tr>
-        <th>Index</th>
         <th>Start</th>
         <th>End</th>
+        <th>Label</th>
         </tr>
+        </thead>
+        <tbody>
         {boxes}
+        </tbody>
         </table>
     )
 }
@@ -69,6 +60,7 @@ function Platform (props) {
     const [loc, setLoc] = useState('(0,0)');
     const [boxesStart, setBoxesStart] = useState({});
     const [boxesEnd, setBoxesEnd] = useState({});
+    const [imgsrc, setImgsrc] = useState('default.svg');
 
     useEffect(() => {
         let canvas = document.getElementById('canvas');
@@ -82,9 +74,29 @@ function Platform (props) {
             setImgH(img.height);
         }
         
-        img.src = props.source;
+        img.src = imgsrc;
 
-    }, [props.source]); 
+    }, [imgsrc]); 
+
+    let handleClearAnnot = function () {
+        setImgW(null);
+        setImgH(null);
+        setLoc('(0,0)');
+        setBoxesStart([]);
+        setBoxesEnd([]);
+        setImgsrc('test.jpg');
+    }
+
+    let handleClearAll = function () {
+        setLoc('(0,0)');
+        setBoxesStart([]);
+        setBoxesEnd([]);
+        if (imgsrc!='default.svg') {
+            setImgW(null);
+            setImgH(null);
+            setImgsrc('default.svg');
+        }
+    }
 
     let getPos = function (e) {
         let canvas = document.getElementById('canvas');
@@ -124,6 +136,18 @@ function Platform (props) {
             <canvas id='canvas' height={400} width={600} onMouseDown={handleDown}
             onMouseMove={handleMove} onMouseUp={handleUp}/>
             <div id='location'>{loc}</div>
+            <center>
+            <input type='file' className='inline-divs' />
+            <button type='button' className='inline-divs' onClick={handleClearAnnot}>
+            Clear annotations
+            </button>
+            <button type='button' className='inline-divs' onClick={handleClearAll}>
+            Clear all
+            </button>
+            <button type='button' className='inline-divs'>
+            Download
+            </button>
+            </center>
             <CaptureList start={boxesStart} end={boxesEnd} />
         </center>
     )
