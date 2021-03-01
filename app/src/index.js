@@ -1,154 +1,49 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import Canvas from './canvas.js';
 
 function App () {
-    return (
-        <div>
-            <Platform/>
-        </div>
-    )
-}
-
-function Capture (props) {
-    return (
-        <tr>
-        <td>({props.start[0]},{props.start[1]})</td>
-        <td>({props.end[0]},{props.end[1]})</td>
-        <td><input type='text' /></td>
-        </tr>
-    )
-}
-
-function CaptureList (props) {
-    const [boxes, setBoxes] = useState([]);
-
-    useEffect(() => {
-        let n = Object.keys(props.end).length;
-        if (n>0) {
-            setBoxes(prev => {
-                return [...prev, <Capture key={n-1} start={props.start[n-1]} end={props.end[n-1]} />]
-            });
-        }
-
-    }, [props.end])
-
-    useEffect(() => {
-        if (Object.keys(props.start).length==0) {
-            setBoxes([]);
-        }
-    }, [props.start])
-
-    return (
-        <table>
-        <thead>
-        <tr>
-        <th>Start</th>
-        <th>End</th>
-        <th>Label</th>
-        </tr>
-        </thead>
-        <tbody>
-        {boxes}
-        </tbody>
-        </table>
-    )
-}
-
-function Platform (props) {
-    const [imgW, setImgW] = useState(null);
-    const [imgH, setImgH] = useState(null);
+    const [source, setSource] = useState('default.svg');
     const [loc, setLoc] = useState('(0,0)');
     const [boxesStart, setBoxesStart] = useState({});
     const [boxesEnd, setBoxesEnd] = useState({});
-    const [imgsrc, setImgsrc] = useState('default.svg');
+    const [nBoxes, setNBoxes] = useState(0);
+    const [active, setActive] = useState(false);
+    const [activeText, setActiveText] = useState('Activate');
 
-    useEffect(() => {
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext('2d');
-        let img = new Image();
-
-        img.onload = function() {
-            canvas.height = canvas.width * (img.height / img.width);
-            ctx.drawImage(img,0,0,canvas.width,canvas.height);
-            setImgW(img.width);
-            setImgH(img.height);
-        }
-        
-        img.src = imgsrc;
-
-    }, [imgsrc]); 
-
-    let handleClearAnnot = function () {
-        setImgW(null);
-        setImgH(null);
-        setLoc('(0,0)');
-        setBoxesStart([]);
-        setBoxesEnd([]);
-        setImgsrc('test.jpg');
-    }
-
-    let handleClearAll = function () {
-        setLoc('(0,0)');
-        setBoxesStart([]);
-        setBoxesEnd([]);
-        if (imgsrc!='default.svg') {
-            setImgW(null);
-            setImgH(null);
-            setImgsrc('default.svg');
-        }
-    }
-
-    let getPos = function (e) {
-        let canvas = document.getElementById('canvas');
-        let bbox = canvas.getBoundingClientRect();
-        let pos = [Math.round((e.clientX-bbox.left) * (imgW/canvas.width)),
-               Math.round((e.clientY-bbox.top) * (imgH/canvas.height))];
-        return pos;
-    }
-
-    let handleMove = function (e) {
-        let pos = getPos(e);
+    function handleMove (pos) {
         setLoc('('+pos[0]+','+pos[1]+')');
     }
 
-    let handleDown = function (e) {
-        let pos = getPos(e);
-        let n = Object.keys(boxesStart).length;
-        setBoxesStart(prev => {
-                      let temp = {...prev};
-                      temp[n] = pos;
-                      return temp;
-        });
+    function handleDown (pos) {
+        setBoxesStart({...boxesStart, [nBoxes]:pos});
     }
 
-    let handleUp = function (e) {
-        let pos = getPos(e);
-        let n = Object.keys(boxesEnd).length;
-        setBoxesEnd(prev => {
-                      let temp = {...prev};
-                      temp[n] = pos;
-                      return temp;
-        });
+    function handleUp (pos) {
+        setBoxesEnd({...boxesEnd, [nBoxes]:pos});
+        setNBoxes(nBoxes+1);
     }
 
+    function changeActive (e) {
+        setActive(!active);
+    }
+
+    useEffect(() => {
+        setActiveText(active?'Deactivate':'Activate');
+        setLoc('(0,0)');
+    }, [active])
+
+    useEffect(() => {
+        console.log(boxesStart);
+        console.log(boxesEnd);
+    }, [boxesEnd])
+    
     return (
         <center>
-            <canvas id='canvas' height={400} width={600} onMouseDown={handleDown}
-            onMouseMove={handleMove} onMouseUp={handleUp}/>
-            <div id='location'>{loc}</div>
-            <center>
-            <input type='file' className='inline-divs' />
-            <button type='button' className='inline-divs' onClick={handleClearAnnot}>
-            Clear annotations
-            </button>
-            <button type='button' className='inline-divs' onClick={handleClearAll}>
-            Clear all
-            </button>
-            <button type='button' className='inline-divs'>
-            Download
-            </button>
-            </center>
-            <CaptureList start={boxesStart} end={boxesEnd} />
+            <Canvas source={source} onMove={handleMove}
+             onDown={handleDown} onUp={handleUp} active={active}/>
+            <p>{loc}</p>
+            <button onClick={changeActive}>{activeText}</button>
         </center>
     )
 }
